@@ -1,4 +1,5 @@
-= Introduction =
+Introduction
+============
 
 A maven plugin to generate camel diagram from routes.
 
