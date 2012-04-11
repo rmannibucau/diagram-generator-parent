@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>fr.rmannibucau</groupId>
+  <artifactId>example</artifactId>
+  <version>1.0</version>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>fr.rmannibucau</groupId>
+        <artifactId>diagram-generator-maven-plugin</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <executions>
+          <execution>
+            <id>pack</id>
+            <phase>package</phase>
+            <goals>
+              <goal>diagram</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <input>src/main/resources/spring</input>
+          <view>true</view>
+          <width>320</width>
+          <height>400</height>
+          <output>target/diagram</output>
+          <type>camel</type>
+          <fileType>xml</fileType>
+          <format>png</format>
+          <adjust>true</adjust>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>fr.rmannibucau</groupId>
+            <artifactId>camel-loader</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
+</project>
