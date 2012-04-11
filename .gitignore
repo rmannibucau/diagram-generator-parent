@@ -1,7 +1,7 @@
 .idea
-tatami.iml
-tatami.ipr
-tatami.iws
+*.iml
+*.ipr
+*.iws
 .classpath
 .project
 .settings
