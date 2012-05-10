@@ -129,8 +129,11 @@ public class CamelLoader implements Loader {
                             diagrams.add(diagram);
                         }
                     } catch (Exception e1) {
-                        LOGGER.error("can't instantiate a builder", e1);
-                        throw new DiagramGeneratorRuntimeException("can't load route class", e);
+                        if (packge == null) {
+                            throw new DiagramGeneratorRuntimeException("can't load route class", e);
+                        } else {
+                            throw new DiagramGeneratorRuntimeException("can't load routes from package", e1);
+                        }
                     }
                 }
             }
