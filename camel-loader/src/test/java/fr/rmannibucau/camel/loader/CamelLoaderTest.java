@@ -22,14 +22,21 @@ public class CamelLoaderTest {
 
     @Test public void loadXml() {
         Loader loader = LoaderHelper.getLoader("camel");
-        Diagram diagram = loader.load(new File(getClass().getResource("/route.xml").getFile()).getParent(), FileType.XML);
+        Diagram diagram = loader.load(new File(getClass().getResource("/route.xml").getFile()).getParent(), FileType.XML).iterator().next();
         assertEquals(10, diagram.getVertices().size());
         assertEquals(9, diagram.getEdges().size());
     }
 
-    @Test public void loadJava() {
+    @Test public void loadJavaFromClass() {
         Loader loader = LoaderHelper.getLoader("camel");
-        Diagram diagram = loader.load("fr.rmannibucau.camel.route.ExampleRouteBuilder", FileType.JAVA);
+        Diagram diagram = loader.load("fr.rmannibucau.camel.route.ExampleRouteBuilder", FileType.JAVA).iterator().next();
+        assertEquals(6, diagram.getVertices().size());
+        assertEquals(5, diagram.getEdges().size());
+    }
+
+    @Test public void loadJavaFromPackage() {
+        Loader loader = LoaderHelper.getLoader("camel");
+        Diagram diagram = loader.load("fr.rmannibucau.camel.route", FileType.JAVA).iterator().next();
         assertEquals(6, diagram.getVertices().size());
         assertEquals(5, diagram.getEdges().size());
     }

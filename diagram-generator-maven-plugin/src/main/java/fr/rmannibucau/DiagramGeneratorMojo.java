@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -93,40 +94,42 @@ public class DiagramGeneratorMojo extends AbstractMojo {
 
     @Override public void execute() throws MojoExecutionException, MojoFailureException {
         final Loader loader = LoaderHelper.getLoader(type);
-        final Diagram diagram = loader.load(input, FileType.valueOf(fileType.toUpperCase()));
-        final Dimension outputSize = new Dimension(width, height);
-        final LevelLayout layout = new LevelLayout(diagram);
-        final VisualizationViewer<Node, Edge> viewer = new GraphViewer(layout);
+        final List<Diagram> diagrams = loader.load(input, FileType.valueOf(fileType.toUpperCase()));
+        for (Diagram diagram : diagrams) {
+            final Dimension outputSize = new Dimension(width, height);
+            final LevelLayout layout = new LevelLayout(diagram);
+            final VisualizationViewer<Node, Edge> viewer = new GraphViewer(layout);
 
-        layout.setVertexShapeTransformer(viewer.getRenderContext().getVertexShapeTransformer());
-        layout.setSize(outputSize);
-        layout.setIgnoreSize(adjust);
-        layout.reset();
-        viewer.setPreferredSize(layout.getSize());
-        viewer.setSize(layout.getSize());
+            layout.setVertexShapeTransformer(viewer.getRenderContext().getVertexShapeTransformer());
+            layout.setSize(outputSize);
+            layout.setIgnoreSize(adjust);
+            layout.reset();
+            viewer.setPreferredSize(layout.getSize());
+            viewer.setSize(layout.getSize());
 
-        // creating a realized window to be sure the viewer will be able to draw correctly the graph
-        final JFrame window = createWindow(viewer, diagram.getName());
+            // creating a realized window to be sure the viewer will be able to draw correctly the graph
+            final JFrame window = createWindow(viewer, diagram.getName());
 
-        // saving it too
-        if (!output.exists()) {
-            output.mkdirs();
-        }
-        saveView(layout.getSize(), outputSize, diagram.getName(), viewer);
-
-        // viewing the window if necessary
-        if (view) {
-            CountDownLatch latch = new CountDownLatch(1);
-            CloseWindowWaiter waiter = new CloseWindowWaiter(latch);
-            window.setVisible(true);
-            window.addWindowListener(waiter);
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                getLog().error("can't await window close event", e);
+            // saving it too
+            if (!output.exists()) {
+                output.mkdirs();
             }
-        } else {
-            window.dispose();
+            saveView(layout.getSize(), outputSize, diagram.getName(), viewer);
+
+            // viewing the window if necessary
+            if (view) {
+                CountDownLatch latch = new CountDownLatch(1);
+                CloseWindowWaiter waiter = new CloseWindowWaiter(latch);
+                window.setVisible(true);
+                window.addWindowListener(waiter);
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    getLog().error("can't await window close event", e);
+                }
+            } else {
+                window.dispose();
+            }
         }
     }
 

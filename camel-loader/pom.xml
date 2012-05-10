@@ -45,6 +45,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.xbean</groupId>
+      <artifactId>xbean-finder-shaded</artifactId>
+      <version>3.11</version>
+    </dependency>
+
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>loader-api</artifactId>
       <version>${project.version}</version>

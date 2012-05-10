@@ -4,21 +4,22 @@ import edu.uci.ics.jung.graph.util.EdgeType;
 import fr.rmannibucau.loader.spi.graph.Diagram;
 import fr.rmannibucau.loader.spi.graph.Edge;
 import fr.rmannibucau.loader.spi.graph.Node;
-import java.net.URL;
-import javax.swing.ImageIcon;
-import org.apache.camel.CamelContext;
-import org.apache.camel.model.FromDefinition;
-import org.apache.camel.model.MulticastDefinition;
-import org.apache.camel.model.ProcessorDefinition;
-import org.apache.camel.model.RouteDefinition;
-import org.apache.camel.view.GraphSupport;
-import org.apache.camel.view.NodeData;
-
 import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.swing.ImageIcon;
+import org.apache.camel.model.FromDefinition;
+import org.apache.camel.model.MulticastDefinition;
+import org.apache.camel.model.ProcessorDefinition;
+import org.apache.camel.model.RouteDefinition;
+import org.apache.camel.model.RoutesDefinition;
+import org.apache.camel.view.GraphSupport;
+import org.apache.camel.view.NodeData;
 
 /**
  * @author Romain Manni-Bucau
@@ -31,9 +32,8 @@ public class GraphGenerator extends GraphSupport {
         diagram = diag;
     }
 
-    public void drawRoutes(CamelContext context) throws IOException {
-        List<RouteDefinition> routes = context.getRouteDefinitions();
-        Map<String,List<RouteDefinition>> routeGroupMap = createRouteGroupMap(routes);
+    public void drawRoutes(final Collection<RouteDefinition> routes) throws IOException {
+        Map<String,List<RouteDefinition>> routeGroupMap = createRouteGroupMap(new ArrayList<RouteDefinition>(routes));
 
         if (routeGroupMap.size() >= 1) {
             Set<Map.Entry<String, List<RouteDefinition>>> entries = routeGroupMap.entrySet();
