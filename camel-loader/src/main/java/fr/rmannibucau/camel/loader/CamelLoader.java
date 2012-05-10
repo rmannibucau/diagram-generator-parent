@@ -111,7 +111,9 @@ public class CamelLoader implements Loader {
                         set = set.excludeJavaHome();
                         set = set.excludeJavaEndorsedDirs();
                         set = set.excludeJavaExtDirs();
-                        set = set.exclude(oldCl.getParent());
+                        if (oldCl != null) {
+                            set = set.exclude(oldCl.getParent());
+                        }
 
                         final AnnotationFinder finder = new AnnotationFinder(new FilteredArchive(new ClasspathArchive(cl, set.getUrls().toArray(new URL[set.getUrls().size()])), new PackageFilter(input)));
                         finder.link();
