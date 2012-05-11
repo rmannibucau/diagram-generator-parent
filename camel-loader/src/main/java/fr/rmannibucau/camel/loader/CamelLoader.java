@@ -6,6 +6,7 @@ import fr.rmannibucau.loader.spi.Loader;
 import fr.rmannibucau.loader.spi.graph.Diagram;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -101,17 +102,12 @@ public class CamelLoader implements Loader {
                     }
                     diagrams.add(diagram);
                 } catch (Exception e) { // try input as a package
-                    final Package packge = Package.getPackage(input);
-                    if (input == null) {
-                        throw new DiagramGeneratorRuntimeException("can't load route class", e);
-                    }
-
                     try {
                         UrlSet set = new UrlSet(cl);
                         set = set.excludeJavaHome();
                         set = set.excludeJavaEndorsedDirs();
                         set = set.excludeJavaExtDirs();
-                        if (oldCl != null) {
+                        if (oldCl.getParent() != null) {
                             set = set.exclude(oldCl.getParent());
                         }
 
@@ -120,6 +116,11 @@ public class CamelLoader implements Loader {
 
                         final List<Class<? extends RouteBuilder>> builders = finder.findSubclasses(RouteBuilder.class);
                         for (Class<? extends RouteBuilder> builderClazz : builders) {
+                            int modifiers = builderClazz.getModifiers();
+                            if (Modifier.isAbstract(modifiers) || builderClazz.getEnclosingClass() != null) {
+                                continue;
+                            }
+
                             final RouteBuilder builder = builderClazz.newInstance();
                             final Diagram diagram = new Diagram();
                             final GraphGenerator graphGenerator = new GraphGenerator(diagram);
@@ -131,11 +132,7 @@ public class CamelLoader implements Loader {
                             diagrams.add(diagram);
                         }
                     } catch (Exception e1) {
-                        if (packge == null) {
-                            throw new DiagramGeneratorRuntimeException("can't load route class", e);
-                        } else {
-                            throw new DiagramGeneratorRuntimeException("can't load routes from package", e1);
-                        }
+                        throw new DiagramGeneratorRuntimeException("can't load routes from package or class", e1);
                     }
                 }
             }
