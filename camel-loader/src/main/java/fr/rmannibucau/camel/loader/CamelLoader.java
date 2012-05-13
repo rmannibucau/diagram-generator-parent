@@ -48,128 +48,98 @@ public class CamelLoader implements Loader {
     private List<Diagram> camelContextToDiagram(String input, FileType fileType) {
         final List<Diagram> diagrams = new ArrayList<Diagram>();
 
-        final ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
-        final ClassLoader cl = classloader();
+        final ClassLoader cl = Thread.currentThread().getContextClassLoader();
 
-        Thread.currentThread().setContextClassLoader(cl);
+        if (fileType.equals(FileType.XML)) { // spring dsl
+            File file = new File(input.replace("%20", " "));
+            if (!file.exists() || file.isDirectory()) {
+                file = new File(file, "*." + fileType.getExtension());
+            }
+            ApplicationContext appCtx;
+            try {
+                appCtx = new FileSystemXmlApplicationContext(file.toURI().toURL().toString());
+            } catch (MalformedURLException e) {
+                String msg = "can't load context file";
+                LOGGER.error(msg, e);
+                throw new DiagramGeneratorRuntimeException(msg, e);
+            }
 
-        try {
-            if (fileType.equals(FileType.XML)) { // spring dsl
-                File file = new File(input.replace("%20", " "));
-                if (!file.exists() || file.isDirectory()) {
-                    file = new File(file, "*." + fileType.getExtension());
-                }
-                ApplicationContext appCtx;
+            final Diagram diagram = new Diagram();
+            final GraphGenerator graphGenerator = new GraphGenerator(diagram);
+
+            diagram.setName(file.getName().substring(0, file.getName().length() - 4));
+            if (diagram.getName().contains("*")) {
+                diagram.setName("camel");
+            }
+            final Collection<SpringCamelContext> contexts = appCtx.getBeansOfType(SpringCamelContext.class).values();
+            for (CamelContext ctx : contexts) {
                 try {
-                    appCtx = new FileSystemXmlApplicationContext(file.toURI().toURL().toString());
-                } catch (MalformedURLException e) {
-                    String msg = "can't load context file";
-                    LOGGER.error(msg, e);
-                    throw new DiagramGeneratorRuntimeException(msg, e);
+                    graphGenerator.drawRoutes(ctx.getRouteDefinitions());
+                } catch (IOException e) {
+                    LOGGER.error("can't draw routes for context '" + ctx.getName() + "'");
                 }
+            }
+            diagrams.add(diagram);
+        } else { // java dsl
+            final CamelContext context = new DefaultCamelContext();
+
+            final Class<?> clazz;
+            try {
+                clazz = cl.loadClass(input);
+                context.addRoutes((RoutesBuilder) clazz.newInstance());
 
                 final Diagram diagram = new Diagram();
                 final GraphGenerator graphGenerator = new GraphGenerator(diagram);
-
-                diagram.setName(file.getName().substring(0, file.getName().length() - 4));
-                if (diagram.getName().contains("*")) {
-                    diagram.setName("camel");
-                }
-                final Collection<SpringCamelContext> contexts = appCtx.getBeansOfType(SpringCamelContext.class).values();
-                for (CamelContext ctx : contexts) {
-                    try {
-                        graphGenerator.drawRoutes(ctx.getRouteDefinitions());
-                    } catch (IOException e) {
-                        LOGGER.error("can't draw routes for context '" + ctx.getName() + "'");
-                    }
+                diagram.setName(clazz.getSimpleName());
+                try {
+                    graphGenerator.drawRoutes(context.getRouteDefinitions());
+                } catch (IOException e) {
+                    LOGGER.error("can't draw routes for context '" + context.getName() + "'", e);
                 }
                 diagrams.add(diagram);
-            } else { // java dsl
-                final CamelContext context = new DefaultCamelContext();
-
-                final Class<?> clazz;
+            } catch (Exception e) { // try input as a package
                 try {
-                    clazz = cl.loadClass(input);
-                    context.addRoutes((RoutesBuilder) clazz.newInstance());
+                    UrlSet set = new UrlSet(cl);
+                    set = set.excludeJavaHome();
+                    set = set.excludeJavaEndorsedDirs();
+                    set = set.excludeJavaExtDirs();
 
-                    final Diagram diagram = new Diagram();
-                    final GraphGenerator graphGenerator = new GraphGenerator(diagram);
-                    diagram.setName(clazz.getSimpleName());
-                    try {
-                        graphGenerator.drawRoutes(context.getRouteDefinitions());
-                    } catch (IOException e) {
-                        LOGGER.error("can't draw routes for context '" + context.getName() + "'", e);
-                    }
-                    diagrams.add(diagram);
-                } catch (Exception e) { // try input as a package
-                    try {
-                        UrlSet set = new UrlSet(cl);
-                        set = set.excludeJavaHome();
-                        set = set.excludeJavaEndorsedDirs();
-                        set = set.excludeJavaExtDirs();
-                        if (oldCl.getParent() != null) {
-                            set = set.exclude(oldCl.getParent());
+                    final AnnotationFinder finder = new AnnotationFinder(new FilteredArchive(new ClasspathArchive(cl, set.getUrls().toArray(new URL[set.getUrls().size()])), new PackageFilter(input)));
+                    finder.link();
+
+                    final List<Class<? extends RouteBuilder>> builders = finder.findSubclasses(RouteBuilder.class);
+                    for (Class<? extends RouteBuilder> builderClazz : builders) {
+                        int modifiers = builderClazz.getModifiers();
+                        if (Modifier.isAbstract(modifiers) || builderClazz.getEnclosingClass() != null) {
+                            continue;
                         }
 
-                        final AnnotationFinder finder = new AnnotationFinder(new FilteredArchive(new ClasspathArchive(cl, set.getUrls().toArray(new URL[set.getUrls().size()])), new PackageFilter(input)));
-                        finder.link();
+                        final RouteBuilder builder = builderClazz.newInstance();
+                        final Diagram diagram = new Diagram();
+                        final GraphGenerator graphGenerator = new GraphGenerator(diagram);
+                        diagram.setName(builderClazz.getSimpleName());
 
-                        final List<Class<? extends RouteBuilder>> builders = finder.findSubclasses(RouteBuilder.class);
-                        for (Class<? extends RouteBuilder> builderClazz : builders) {
-                            int modifiers = builderClazz.getModifiers();
-                            if (Modifier.isAbstract(modifiers) || builderClazz.getEnclosingClass() != null) {
-                                continue;
-                            }
-
-                            final RouteBuilder builder = builderClazz.newInstance();
-                            final Diagram diagram = new Diagram();
-                            final GraphGenerator graphGenerator = new GraphGenerator(diagram);
-                            diagram.setName(builderClazz.getSimpleName());
-
-                            final DefaultCamelContext ctx = new DefaultCamelContext();
-                            ctx.addRoutes(builder);
-                            graphGenerator.drawRoutes(ctx.getRouteDefinitions());
-                            diagrams.add(diagram);
-                        }
-                    } catch (Exception e1) {
-                        throw new DiagramGeneratorRuntimeException("can't load routes from package or class", e1);
+                        final DefaultCamelContext ctx = new DefaultCamelContext();
+                        ctx.addRoutes(builder);
+                        graphGenerator.drawRoutes(ctx.getRouteDefinitions());
+                        diagrams.add(diagram);
                     }
+                } catch (Exception e1) {
+                    throw new DiagramGeneratorRuntimeException("can't load routes from package or class", e1);
                 }
             }
+        }
 
-            if (diagrams.size() == 0) {
-                String msg = "can't find route inside " + input;
-                if (fileType.equals(FileType.XML)) {
-                    msg += " directory.";
-                } else if (fileType.equals(FileType.JAVA)) {
-                    msg += " package.";
-                }
-                throw new DiagramGeneratorRuntimeException(msg, new Exception(msg));
+        if (diagrams.size() == 0) {
+            String msg = "can't find route inside " + input;
+            if (fileType.equals(FileType.XML)) {
+                msg += " directory.";
+            } else if (fileType.equals(FileType.JAVA)) {
+                msg += " package.";
             }
-        } finally {
-            Thread.currentThread().setContextClassLoader(oldCl);
+            throw new DiagramGeneratorRuntimeException(msg, new Exception(msg));
         }
 
         return diagrams;
-    }
-
-    private ClassLoader classloader() {
-        final ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        final File target = new File("target/classes");
-        final File targetTest = new File("target/test-classes");
-        if (target.exists() && targetTest.exists()) {
-            try {
-                return new URLClassLoader(new URL[] { target.toURI().toURL(), targetTest.toURI().toURL() }, cl);
-            } catch (MalformedURLException e) {
-                return cl;
-            }
-        } else if (target.exists()) {
-            try {
-                return new URLClassLoader(new URL[] { target.toURI().toURL() }, cl);
-            } catch (MalformedURLException e) {
-                return cl;
-            }
-        }
-        return cl;
     }
 }

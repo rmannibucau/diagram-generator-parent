@@ -4,7 +4,6 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import fr.rmannibucau.graph.GraphViewer;
 import fr.rmannibucau.graph.layout.LevelLayout;
-import fr.rmannibucau.graph.transformer.VertexShapeTransformer;
 import fr.rmannibucau.listener.CloseWindowWaiter;
 import fr.rmannibucau.loader.spi.FileType;
 import fr.rmannibucau.loader.spi.Loader;
@@ -24,6 +23,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import javax.imageio.ImageIO;
@@ -34,8 +37,11 @@ import org.apache.maven.plugin.MojoFailureException;
 
 /**
  * @author Romain Manni-Bucau
+ *
  * @goal diagram
  * @phase package
+ * @threadSafe true
+ * @requiresDependencyResolution runtime
  */
 public class DiagramGeneratorMojo extends AbstractMojo {
     /**
@@ -92,44 +98,60 @@ public class DiagramGeneratorMojo extends AbstractMojo {
      */
     private String format;
 
+    /**
+     * @parameter
+     * @required
+     */
+    private List<String> additionalClasspathElements;
+
     @Override public void execute() throws MojoExecutionException, MojoFailureException {
         final Loader loader = LoaderHelper.getLoader(type);
-        final List<Diagram> diagrams = loader.load(input, FileType.valueOf(fileType.toUpperCase()));
-        for (Diagram diagram : diagrams) {
-            final Dimension outputSize = new Dimension(width, height);
-            final LevelLayout layout = new LevelLayout(diagram);
-            final VisualizationViewer<Node, Edge> viewer = new GraphViewer(layout);
 
-            layout.setVertexShapeTransformer(viewer.getRenderContext().getVertexShapeTransformer());
-            layout.setSize(outputSize);
-            layout.setIgnoreSize(adjust);
-            layout.reset();
-            viewer.setPreferredSize(layout.getSize());
-            viewer.setSize(layout.getSize());
+        final ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
+        final ClassLoader cl = classloader();
 
-            // creating a realized window to be sure the viewer will be able to draw correctly the graph
-            final JFrame window = createWindow(viewer, diagram.getName());
+        Thread.currentThread().setContextClassLoader(cl);
 
-            // saving it too
-            if (!output.exists()) {
-                output.mkdirs();
-            }
-            saveView(layout.getSize(), outputSize, diagram.getName(), viewer);
+        try {
+            final List<Diagram> diagrams = loader.load(input, FileType.valueOf(fileType.toUpperCase()));
+            for (Diagram diagram : diagrams) {
+                final Dimension outputSize = new Dimension(width, height);
+                final LevelLayout layout = new LevelLayout(diagram);
+                final VisualizationViewer<Node, Edge> viewer = new GraphViewer(layout);
 
-            // viewing the window if necessary
-            if (view) {
-                CountDownLatch latch = new CountDownLatch(1);
-                CloseWindowWaiter waiter = new CloseWindowWaiter(latch);
-                window.setVisible(true);
-                window.addWindowListener(waiter);
-                try {
-                    latch.await();
-                } catch (InterruptedException e) {
-                    getLog().error("can't await window close event", e);
+                layout.setVertexShapeTransformer(viewer.getRenderContext().getVertexShapeTransformer());
+                layout.setSize(outputSize);
+                layout.setIgnoreSize(adjust);
+                layout.reset();
+                viewer.setPreferredSize(layout.getSize());
+                viewer.setSize(layout.getSize());
+
+                // creating a realized window to be sure the viewer will be able to draw correctly the graph
+                final JFrame window = createWindow(viewer, diagram.getName());
+
+                // saving it too
+                if (!output.exists()) {
+                    output.mkdirs();
                 }
-            } else {
-                window.dispose();
+                saveView(layout.getSize(), outputSize, diagram.getName(), viewer);
+
+                // viewing the window if necessary
+                if (view) {
+                    CountDownLatch latch = new CountDownLatch(1);
+                    CloseWindowWaiter waiter = new CloseWindowWaiter(latch);
+                    window.setVisible(true);
+                    window.addWindowListener(waiter);
+                    try {
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        getLog().error("can't await window close event", e);
+                    }
+                } else {
+                    window.dispose();
+                }
             }
+        } finally {
+            Thread.currentThread().setContextClassLoader(oldCl);
         }
     }
 
@@ -193,6 +215,38 @@ public class DiagramGeneratorMojo extends AbstractMojo {
                 }
             }
         }
+    }
+
+    private ClassLoader classloader() {
+        final ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        if (additionalClasspathElements == null || additionalClasspathElements.isEmpty()) {
+            additionalClasspathElements = new ArrayList<String>();
+            additionalClasspathElements.add("target/classes");
+        }
+
+        final List<URL> urls = new ArrayList<URL>(additionalClasspathElements.size());
+        for (String add : additionalClasspathElements) {
+            final File file = new File(add);
+            if (file.exists()) {
+                try {
+                    urls.add(file.toURI().toURL());
+                } catch (MalformedURLException e) {
+                    getLog().warn("Ignoring '" + add + "'", e);
+                }
+            } else {
+                getLog().warn("Ignoring '" + add + "' since it doesn't exist.");
+            }
+        }
+
+        return new URLClassLoader(urls.toArray(new URL[urls.size()]), cl);
+    }
+
+    public List<String> getAdditionalClasspathElements() {
+        return additionalClasspathElements;
+    }
+
+    public void setAdditionalClasspathElements(List<String> additionalClasspathElements) {
+        this.additionalClasspathElements = additionalClasspathElements;
     }
 
     public String getInput() {

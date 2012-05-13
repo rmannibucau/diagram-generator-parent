@@ -33,6 +33,9 @@
           <fileType>xml</fileType>
           <format>png</format>
           <adjust>true</adjust>
+          <additionalClasspathElements>
+            <additionalClasspathElement>target/classes</additionalClasspathElement>
+          </additionalClasspathElements>
         </configuration>
         <dependencies>
           <dependency>
