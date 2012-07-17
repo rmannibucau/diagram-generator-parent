@@ -1,3 +1,5 @@
+[![Build Status](https://secure.travis-ci.org/rmannibucau/diagram-generator-parent.png)](http://travis-ci.org/rmannibucau/diagram-generator-parent)
+
 Introduction
 ============
 
