@@ -1,4 +1,6 @@
 language: java
+# tests need X11
+script: mvn clean install -DskipTests=true
 jdk:
   - openjdk7
   - openjdk6
