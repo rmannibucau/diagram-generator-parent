@@ -73,10 +73,10 @@
 
   <properties>
     <jung.version>2.0.1</jung.version>
-    <camel.version>2.9.2</camel.version>
+    <camel.version>2.10.0</camel.version>
     <maven.version>3.0.4</maven.version>
     <log4j.version>1.2.16</log4j.version>
-    <slf4j.version>1.6.1</slf4j.version>
+    <slf4j.version>1.6.4</slf4j.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 

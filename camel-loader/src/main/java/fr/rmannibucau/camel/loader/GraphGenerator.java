@@ -64,7 +64,7 @@ public class GraphGenerator extends GraphSupport {
     private NodeData addNode(NodeData fromData, ProcessorDefinition<?> node) {
         if (node instanceof MulticastDefinition) {
             // no need for a multicast or interceptor node
-            List<ProcessorDefinition> outputs = node.getOutputs();
+            List<ProcessorDefinition<?>> outputs = node.getOutputs();
             boolean isPipeline = isPipeline(node);
             for (ProcessorDefinition output : outputs) {
                 NodeData out = addNode(fromData, output);
@@ -83,7 +83,7 @@ public class GraphGenerator extends GraphSupport {
             diagram.addEdge(new Edge(fromData.edgeLabel), node(fromData), node(toData), EdgeType.DIRECTED);
         }
 
-        List<ProcessorDefinition> outputs = toData.outputs;
+        List<ProcessorDefinition<?>> outputs = toData.outputs;
         if (outputs != null) {
             for (ProcessorDefinition output : outputs) {
                 NodeData newData = addNode(toData, output);
