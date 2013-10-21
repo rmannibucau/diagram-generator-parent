@@ -106,13 +106,6 @@
     </plugins>
   </build>
 
-  <distributionManagement>
-    <repository>
-      <id>nexus</id>
-      <url>http://nexus</url>
-    </repository>
-  </distributionManagement>
-
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
