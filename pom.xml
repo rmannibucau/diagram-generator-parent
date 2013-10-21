@@ -11,7 +11,7 @@
 
   <groupId>com.github.rmannibucau</groupId>
   <artifactId>diagram-generator-parent</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Camel :: Diagram Generator</name>
 
