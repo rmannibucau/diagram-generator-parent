@@ -4,21 +4,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>diagram-generator-parent</artifactId>
-    <groupId>fr.rmannibucau</groupId>
+    <groupId>com.github.rmannibucau</groupId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>diagram-generator-maven-plugin</artifactId>
   <packaging>maven-plugin</packaging>
-  <name>rmannibucau :: Camel :: Diagram Generator :: Maven Generator Plugin</name>
+  <name>Camel :: Diagram Generator :: Maven Generator Plugin</name>
 
   <dependencies>
-    <dependency>
+    <dependency> <!-- the mojo default so provide it -->
       <groupId>${project.groupId}</groupId>
       <artifactId>camel-loader</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -30,6 +29,10 @@
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugin-tools</groupId>
+      <artifactId>maven-plugin-annotations</artifactId>
     </dependency>
 
     <dependency>
@@ -46,4 +49,28 @@
       <artifactId>junit</artifactId>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>3.1</version>
+        <executions>
+          <execution>
+            <id>mojo-descriptor</id>
+            <goals>
+              <goal>descriptor</goal>
+              <goal>helpmojo</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <goalPrefix>diagram-generator</goalPrefix>
+          <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
 </project>

@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>diagram-generator-parent</artifactId>
-    <groupId>fr.rmannibucau</groupId>
+    <groupId>com.github.rmannibucau</groupId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>loader-api</artifactId>
-  <name>rmannibucau :: Camel :: Diagram Generator :: Loader API</name>
+  <name>Camel :: Diagram Generator :: Loader API</name>
 
   <dependencies>
     <dependency>

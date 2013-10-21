@@ -11,7 +11,7 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>fr.rmannibucau</groupId>
+        <groupId>com.github.rmannibucau</groupId>
         <artifactId>diagram-generator-maven-plugin</artifactId>
         <version>0.0.1-SNAPSHOT</version>
         <executions>
@@ -19,7 +19,7 @@
             <id>pack</id>
             <phase>package</phase>
             <goals>
-              <goal>diagram</goal>
+              <goal>generate</goal>
             </goals>
           </execution>
         </executions>
@@ -37,13 +37,6 @@
             <additionalClasspathElement>target/classes</additionalClasspathElement>
           </additionalClasspathElements>
         </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>fr.rmannibucau</groupId>
-            <artifactId>camel-loader</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-          </dependency>
-        </dependencies>
       </plugin>
     </plugins>
   </build>
