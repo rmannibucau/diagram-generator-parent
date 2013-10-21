@@ -64,3 +64,8 @@ Note
 This plugin suppose you don't have cycles in your diagram and you have each endpoints only once. If you
 use the same endpoints twice try to change a bit its name during the generation.
 
+License
+=======
+
+This software is licensed under the terms you may find in the file
+named "LICENSE" in this directory.
