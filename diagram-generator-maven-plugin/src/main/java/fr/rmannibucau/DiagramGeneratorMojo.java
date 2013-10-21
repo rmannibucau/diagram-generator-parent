@@ -100,7 +100,6 @@ public class DiagramGeneratorMojo extends AbstractMojo {
 
     /**
      * @parameter
-     * @required
      */
     private List<String> additionalClasspathElements;
 

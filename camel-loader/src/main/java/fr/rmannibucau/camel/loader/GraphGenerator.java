@@ -18,6 +18,7 @@ import org.apache.camel.model.MulticastDefinition;
 import org.apache.camel.model.ProcessorDefinition;
 import org.apache.camel.model.RouteDefinition;
 import org.apache.camel.model.RoutesDefinition;
+import org.apache.camel.model.OnExceptionDefinition;
 import org.apache.camel.view.GraphSupport;
 import org.apache.camel.view.NodeData;
 
@@ -78,6 +79,12 @@ public class GraphGenerator extends GraphSupport {
 
         NodeData toData = getNodeData(node);
         node(toData);
+
+		// exception handler should be on top level without incoming edges from
+
+        if (node instanceof OnExceptionDefinition) {
+            return fromData;
+        }
 
         if (fromData != null) {
             diagram.addEdge(new Edge(fromData.edgeLabel), node(fromData), node(toData), EdgeType.DIRECTED);
